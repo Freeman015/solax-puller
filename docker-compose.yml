@@ -1,0 +1,42 @@
+version: '3.9'
+services:
+    web:
+        image: solaxpuller:latest
+        env_file: .env
+        container_name: solaxpuller
+        restart: always
+        build:
+            dockerfile: Dockerfile
+        ports:
+            - "8080:8080"
+
+    mariadb:
+      env_file: .env
+      image: 'mariadb:latest'
+      container_name: db
+      ports:
+        - '3306:3306'
+      environment:
+          ALLOW_EMPTY_PASSWORD: 1
+          MARIADB_USER: ${DB_USERNAME}
+          MARIADB_PASSWORD: ${DB_PASSWORD}
+          MARIADB_DATABASE: ${DB_DATABASE}
+          MARIADB_ROOT_PASSWORD: ${DB_PASSWORD}
+      volumes:
+        - ./.docker/mysql/conf.d:/etc/mysql/conf.d
+        - ./.docker/mysql/data:/var/lib/mysql
+
+    phpmyadmin:
+      env_file: .env
+      depends_on:
+        - mariadb
+      image: 'phpmyadmin/phpmyadmin'
+      container_name: phpmyadmin
+      links:
+        - mariadb:mariadb
+      ports:
+        - 5000:80
+      environment:
+          MYSQL_USERNAME: ${DB_USERNAME}
+          MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+          PMA_HOST: mariadb
